@@ -7,7 +7,7 @@ import {
   FileAudio, 
   History, 
   Settings,
-  Record
+  Mic
 } from "lucide-react";
 
 interface SidebarProps {
@@ -32,7 +32,7 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
     { 
       name: "Record", 
       href: "/record", 
-      icon: Record 
+      icon: Mic 
     },
     { 
       name: "Transcript", 

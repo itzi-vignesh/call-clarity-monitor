@@ -1,6 +1,5 @@
-
 import { useState, useRef } from "react";
-import { Upload, X, FileAudio } from "lucide-react";
+import { Upload, X, FileAudio, Mic } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
@@ -224,7 +223,7 @@ const UploadPage = () => {
                 </p>
                 <Button variant="outline" size="sm" asChild>
                   <Link to="/record">
-                    <Record className="mr-1 h-4 w-4" />
+                    <Mic className="mr-1 h-4 w-4" />
                     Switch to Live Recording
                   </Link>
                 </Button>

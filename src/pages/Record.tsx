@@ -1,6 +1,6 @@
 
 import { useState, useRef, useEffect } from "react";
-import { Mic, X, StopCircle, PlayCircle, FileAudio } from "lucide-react";
+import { Mic, X, StopCircle, PlayCircle, FileAudio, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import AppLayout from "@/components/layout/AppLayout";
@@ -21,7 +21,7 @@ const RecordPage = () => {
 
   // Timer for recording duration
   useEffect(() => {
-    let interval: number | undefined;
+    let interval: NodeJS.Timeout | undefined;
     
     if (isRecording) {
       interval = setInterval(() => {
@@ -31,7 +31,9 @@ const RecordPage = () => {
       clearInterval(interval);
     }
     
-    return () => clearInterval(interval);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
   }, [isRecording, recordingTime]);
 
   const formatTime = (time: number) => {
