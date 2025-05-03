@@ -51,8 +51,7 @@ const ComplianceScore = ({ score, className }: ComplianceScoreProps) => {
         
         <Progress 
           value={score} 
-          className="h-2 mt-4" 
-          indicatorClassName={getProgressColor()}
+          className={cn("h-2 mt-4", getProgressColor())}
         />
         
         <div className="flex justify-between text-xs mt-1">
