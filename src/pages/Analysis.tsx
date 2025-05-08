@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getCallById } from "@/services/callService";
@@ -44,12 +44,14 @@ const AnalysisPage = () => {
     queryKey: ['call', callId],
     queryFn: () => getCallById(callId || ""),
     enabled: !!callId,
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to load analysis data. Please try again later.",
-        variant: "destructive"
-      });
+    meta: {
+      onError: () => {
+        toast({
+          title: "Error",
+          description: "Failed to load analysis data. Please try again later.",
+          variant: "destructive"
+        });
+      }
     }
   });
 
@@ -262,10 +264,8 @@ const AnalysisPage = () => {
                       <Bar 
                         dataKey="count" 
                         name="Count" 
-                        fill={({ status }) => 
-                          status === 'compliant' ? '#10b981' : 
-                          status === 'warning' ? '#f59e0b' : '#ef4444'
-                        }
+                        fill="#8884d8"
+                        className="fill-current text-primary"
                       />
                     </BarChart>
                   </ResponsiveContainer>
@@ -327,11 +327,7 @@ const AnalysisPage = () => {
                       <Bar 
                         dataKey="value" 
                         name="Score" 
-                        fill={({ name, value }) => {
-                          if (value >= 85) return '#10b981';
-                          if (value >= 70) return '#f59e0b';
-                          return '#ef4444';
-                        }}
+                        fill="#10b981"
                       />
                     </BarChart>
                   </ResponsiveContainer>

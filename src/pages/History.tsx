@@ -22,12 +22,14 @@ const HistoryPage = () => {
   const { data: callHistory = [], isLoading, error } = useQuery({
     queryKey: ['callHistory'],
     queryFn: getCallHistory,
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to load call history. Please try again later.",
-        variant: "destructive"
-      });
+    meta: {
+      onError: () => {
+        toast({
+          title: "Error",
+          description: "Failed to load call history. Please try again later.",
+          variant: "destructive"
+        });
+      }
     }
   });
 

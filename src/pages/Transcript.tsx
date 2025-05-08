@@ -5,7 +5,7 @@ import AppLayout from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import ComplianceChecklist, { ComplianceItem } from "@/components/compliance/ComplianceChecklist";
+import ComplianceChecklist from "@/components/compliance/ComplianceChecklist";
 import ComplianceScore from "@/components/compliance/ComplianceScore";
 import { cn } from "@/lib/utils";
 import { useLocation } from "react-router-dom";
@@ -32,12 +32,14 @@ const TranscriptPage = () => {
     queryKey: ['call', callId],
     queryFn: () => getCallById(callId || ""),
     enabled: !!callId,
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to load transcript data. Please try again later.",
-        variant: "destructive"
-      });
+    meta: {
+      onError: () => {
+        toast({
+          title: "Error",
+          description: "Failed to load transcript data. Please try again later.",
+          variant: "destructive"
+        });
+      }
     }
   });
 
