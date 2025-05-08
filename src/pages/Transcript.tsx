@@ -8,15 +8,10 @@ import { Separator } from "@/components/ui/separator";
 import ComplianceChecklist, { ComplianceItem } from "@/components/compliance/ComplianceChecklist";
 import ComplianceScore from "@/components/compliance/ComplianceScore";
 import { cn } from "@/lib/utils";
-
-interface TranscriptSegment {
-  id: string;
-  speaker: "agent" | "customer";
-  text: string;
-  time: string;
-  flagged?: boolean;
-  flagReason?: string;
-}
+import { useLocation } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { getCallById, TranscriptSegment } from "@/services/callService";
+import { useToast } from "@/hooks/use-toast";
 
 const TranscriptPage = () => {
   const [activeTab, setActiveTab] = useState("transcript");
@@ -25,83 +20,26 @@ const TranscriptPage = () => {
   const [highlightedSegment, setHighlightedSegment] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const transcriptRef = useRef<HTMLDivElement>(null);
+  const location = useLocation();
+  const { toast } = useToast();
   
-  // Mock transcript data
-  const [transcript] = useState<TranscriptSegment[]>([
-    { id: "1", speaker: "agent", text: "Thank you for calling customer support. My name is John. How can I help you today?", time: "00:00" },
-    { id: "2", speaker: "customer", text: "Hi, I'm having trouble with my account. I can't access my dashboard.", time: "00:05" },
-    { id: "3", speaker: "agent", text: "I'm sorry to hear that. I'd be happy to help you with that. Could you please confirm your email address for verification?", time: "00:10" },
-    { id: "4", speaker: "customer", text: "Sure, it's customer@example.com", time: "00:15" },
-    { id: "5", speaker: "agent", text: "Thank you. Can you also provide your full name as it appears on the account?", time: "00:18" },
-    { id: "6", speaker: "customer", text: "It's Jane Smith", time: "00:22" },
-    { id: "7", speaker: "agent", text: "Thanks Jane. Let me take a look at your account. I can see that your account is currently locked due to multiple failed login attempts. Would you like me to reset it for you?", time: "00:25" },
-    { id: "8", speaker: "customer", text: "Yes please, that would be great.", time: "00:40" },
-    { id: "9", speaker: "agent", text: "I'll go ahead and reset that for you now. While I do that, could I get your phone number in case we need to contact you about this issue in the future?", time: "00:43", flagged: true, flagReason: "Unnecessary collection of personal data" },
-    { id: "10", speaker: "customer", text: "It's 555-123-4567", time: "00:50" },
-    { id: "11", speaker: "agent", text: "Great, I've reset your account. You should receive a temporary password via email within the next few minutes. Is there anything else I can assist you with today?", time: "00:55" },
-    { id: "12", speaker: "customer", text: "No, that's all. Thank you for your help.", time: "01:05" },
-    { id: "13", speaker: "agent", text: "You're welcome. Thank you for contacting customer support. Have a great day!", time: "01:08" }
-  ]);
+  // Get the call ID from the URL query parameters
+  const queryParams = new URLSearchParams(location.search);
+  const callId = queryParams.get("id");
 
-  // Mock compliance data
-  const [complianceItems] = useState<ComplianceItem[]>([
-    { 
-      id: "1", 
-      category: "Personal Data Handling", 
-      requirement: "Only collect necessary information", 
-      status: "violation", 
-      details: "Agent collected phone number without business necessity",
-      timestamp: "00:43"
-    },
-    { 
-      id: "2", 
-      category: "Personal Data Handling", 
-      requirement: "Verify customer identity", 
-      status: "compliant", 
-      details: "Agent properly verified email and name",
-      timestamp: "00:18"
-    },
-    { 
-      id: "3", 
-      category: "Customer Communication", 
-      requirement: "Clear communication", 
-      status: "compliant", 
-      details: "Agent communicated clearly throughout the call",
-    },
-    { 
-      id: "4", 
-      category: "Customer Communication", 
-      requirement: "Proper greeting", 
-      status: "compliant", 
-      details: "Agent introduced themselves and offered help",
-      timestamp: "00:00"
-    },
-    { 
-      id: "5", 
-      category: "Call Handling", 
-      requirement: "Proper closing", 
-      status: "compliant", 
-      details: "Agent thanked customer and offered additional help",
-      timestamp: "01:08"
-    },
-    { 
-      id: "6", 
-      category: "Problem Resolution", 
-      requirement: "Issue resolved", 
-      status: "compliant", 
-      details: "Agent successfully resolved customer's access issue"
-    },
-    { 
-      id: "7", 
-      category: "Personal Data Handling", 
-      requirement: "Data security practices", 
-      status: "warning", 
-      details: "Agent sent temporary password via email, which is not the most secure method",
-      timestamp: "00:55"
+  // Query for fetching call data
+  const { data: callData, isLoading, error } = useQuery({
+    queryKey: ['call', callId],
+    queryFn: () => getCallById(callId || ""),
+    enabled: !!callId,
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to load transcript data. Please try again later.",
+        variant: "destructive"
+      });
     }
-  ]);
-
-  const [complianceScore] = useState(82);
+  });
 
   useEffect(() => {
     if (highlightedSegment && transcriptRef.current) {
@@ -123,10 +61,27 @@ const TranscriptPage = () => {
     }
   };
 
-  const timeToSeconds = (timeStr: string) => {
-    const [minutes, seconds] = timeStr.split(':').map(Number);
-    return minutes * 60 + seconds;
-  };
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="flex justify-center py-12">
+          <p>Loading transcript data...</p>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (error || !callData) {
+    return (
+      <AppLayout>
+        <div className="flex justify-center py-12 text-destructive">
+          <p>Error loading transcript. Please try again.</p>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  const { transcript, complianceItems, score, agent, date, time } = callData;
 
   return (
     <AppLayout>
@@ -134,7 +89,7 @@ const TranscriptPage = () => {
         <h2 className="text-3xl font-bold tracking-tight">Call Analysis</h2>
         <div className="flex items-center justify-between">
           <p className="text-muted-foreground">
-            Customer support call - May 3, 2025 02:15 PM | Agent: John Doe
+            Customer support call - {date} {time} | Agent: {agent}
           </p>
           <div className="flex items-center">
             <audio 
@@ -172,7 +127,7 @@ const TranscriptPage = () => {
                 ref={transcriptRef} 
                 className="rounded-lg border bg-card p-4 h-[calc(100vh-250px)] overflow-y-auto"
               >
-                {transcript.map((segment) => (
+                {transcript.map((segment: TranscriptSegment) => (
                   <div 
                     key={segment.id} 
                     id={`segment-${segment.id}`}
@@ -211,19 +166,19 @@ const TranscriptPage = () => {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div className="p-3 bg-muted rounded-lg">
                         <p className="text-sm text-muted-foreground">Duration</p>
-                        <p className="text-xl font-medium">01:13</p>
+                        <p className="text-xl font-medium">{callData.duration}</p>
                       </div>
                       <div className="p-3 bg-muted rounded-lg">
                         <p className="text-sm text-muted-foreground">Agent Talk Time</p>
-                        <p className="text-xl font-medium">60%</p>
+                        <p className="text-xl font-medium">{callData.analytics.agentTalkTime}%</p>
                       </div>
                       <div className="p-3 bg-muted rounded-lg">
                         <p className="text-sm text-muted-foreground">Customer Talk Time</p>
-                        <p className="text-xl font-medium">40%</p>
+                        <p className="text-xl font-medium">{callData.analytics.customerTalkTime}%</p>
                       </div>
                       <div className="p-3 bg-muted rounded-lg">
                         <p className="text-sm text-muted-foreground">Issue Resolved</p>
-                        <p className="text-xl font-medium text-success">Yes</p>
+                        <p className="text-xl font-medium text-success">{score >= 70 ? "Yes" : "No"}</p>
                       </div>
                     </div>
                   </div>
@@ -235,16 +190,37 @@ const TranscriptPage = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="p-3 bg-muted rounded-lg">
                         <p className="text-sm text-muted-foreground">Agent Tone</p>
-                        <p className="text-xl font-medium">Professional</p>
+                        <p className="text-xl font-medium">
+                          {callData.analytics.agentTone >= 90 ? "Excellent" : 
+                           callData.analytics.agentTone >= 80 ? "Professional" : 
+                           callData.analytics.agentTone >= 70 ? "Good" : "Needs Improvement"}
+                        </p>
                         <div className="mt-2 h-2 bg-muted-foreground/20 rounded-full">
-                          <div className="h-full bg-success rounded-full" style={{ width: '90%' }}></div>
+                          <div 
+                            className={cn(
+                              "h-full rounded-full",
+                              callData.analytics.agentTone >= 85 ? "bg-success" :
+                              callData.analytics.agentTone >= 70 ? "bg-warning" : "bg-destructive"
+                            )} 
+                            style={{ width: `${callData.analytics.agentTone}%` }}
+                          ></div>
                         </div>
                       </div>
                       <div className="p-3 bg-muted rounded-lg">
                         <p className="text-sm text-muted-foreground">Customer Sentiment</p>
-                        <p className="text-xl font-medium">Positive</p>
+                        <p className="text-xl font-medium">
+                          {callData.analytics.customerSentiment >= 80 ? "Positive" : 
+                           callData.analytics.customerSentiment >= 60 ? "Neutral" : "Negative"}
+                        </p>
                         <div className="mt-2 h-2 bg-muted-foreground/20 rounded-full">
-                          <div className="h-full bg-success rounded-full" style={{ width: '85%' }}></div>
+                          <div 
+                            className={cn(
+                              "h-full rounded-full",
+                              callData.analytics.customerSentiment >= 80 ? "bg-success" :
+                              callData.analytics.customerSentiment >= 60 ? "bg-warning" : "bg-destructive"
+                            )} 
+                            style={{ width: `${callData.analytics.customerSentiment}%` }}
+                          ></div>
                         </div>
                       </div>
                     </div>
@@ -253,28 +229,34 @@ const TranscriptPage = () => {
                   <Separator />
                   
                   <div>
+                    <h3 className="font-medium mb-2">Key Phrases</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {callData.analytics.keyPhrases.map((phrase, index) => (
+                        <div key={index} className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
+                          {phrase}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <Separator />
+                  
+                  <div>
                     <h3 className="font-medium mb-2">Script Adherence</h3>
                     <div className="space-y-2">
-                      <div className="flex items-center justify-between p-2 bg-muted rounded-lg">
-                        <span className="text-sm">Proper Greeting</span>
-                        <span className="text-success text-sm">✓ Compliant</span>
-                      </div>
-                      <div className="flex items-center justify-between p-2 bg-muted rounded-lg">
-                        <span className="text-sm">Identity Verification</span>
-                        <span className="text-success text-sm">✓ Compliant</span>
-                      </div>
-                      <div className="flex items-center justify-between p-2 bg-muted rounded-lg">
-                        <span className="text-sm">Problem Resolution</span>
-                        <span className="text-success text-sm">✓ Compliant</span>
-                      </div>
-                      <div className="flex items-center justify-between p-2 bg-muted rounded-lg">
-                        <span className="text-sm">Data Collection Practices</span>
-                        <span className="text-destructive text-sm">✗ Non-compliant</span>
-                      </div>
-                      <div className="flex items-center justify-between p-2 bg-muted rounded-lg">
-                        <span className="text-sm">Proper Closing</span>
-                        <span className="text-success text-sm">✓ Compliant</span>
-                      </div>
+                      {complianceItems.map(item => (
+                        <div key={item.id} className="flex items-center justify-between p-2 bg-muted rounded-lg">
+                          <span className="text-sm">{item.requirement}</span>
+                          <span className={cn(
+                            "text-sm",
+                            item.status === "compliant" ? "text-success" :
+                            item.status === "warning" ? "text-warning" : "text-destructive"
+                          )}>
+                            {item.status === "compliant" ? "✓ Compliant" :
+                             item.status === "warning" ? "⚠ Needs Review" : "✗ Non-compliant"}
+                          </span>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -284,7 +266,7 @@ const TranscriptPage = () => {
         </div>
         
         <div className="space-y-6">
-          <ComplianceScore score={complianceScore} />
+          <ComplianceScore score={score} />
           
           <ComplianceChecklist 
             items={complianceItems}

@@ -10,6 +10,7 @@ import RecordPage from "./pages/Record";
 import TranscriptPage from "./pages/Transcript";
 import HistoryPage from "./pages/History";
 import SettingsPage from "./pages/Settings";
+import AnalysisPage from "./pages/Analysis";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/record" element={<RecordPage />} />
           <Route path="/transcript" element={<TranscriptPage />} />
           <Route path="/history" element={<HistoryPage />} />
+          <Route path="/analysis" element={<AnalysisPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

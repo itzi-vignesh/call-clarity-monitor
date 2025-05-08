@@ -10,7 +10,7 @@ import {
   type SortingState,
   getFilteredRowModel,
 } from "@tanstack/react-table";
-import { ArrowUpDown, ChevronDown, Search } from "lucide-react";
+import { ArrowUpDown, ChevronDown, Search, BarChart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/table";
 import ComplianceIndicator from "../compliance/ComplianceIndicator";
 import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export type CallRecord = {
   id: string;
@@ -50,6 +51,11 @@ export const CallTable = ({ data, className }: CallTableProps) => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
   const [rowSelection, setRowSelection] = useState({});
+  const navigate = useNavigate();
+
+  const handleViewAnalysis = (id: string) => {
+    navigate(`/analysis?id=${id}`);
+  };
 
   const columns: ColumnDef<CallRecord>[] = [
     {
@@ -118,15 +124,25 @@ export const CallTable = ({ data, className }: CallTableProps) => {
       id: "actions",
       cell: ({ row }) => {
         return (
-          <Button 
-            variant="outline" 
-            size="sm"
-            asChild
-          >
-            <Link to={`/transcript?id=${row.original.id}`}>
-              View
-            </Link>
-          </Button>
+          <div className="flex space-x-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              asChild
+            >
+              <Link to={`/transcript?id=${row.original.id}`}>
+                View
+              </Link>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleViewAnalysis(row.original.id)}
+            >
+              <BarChart className="h-4 w-4 mr-1" />
+              Analysis
+            </Button>
+          </div>
         );
       },
     },
